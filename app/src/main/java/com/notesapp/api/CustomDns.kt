@@ -15,7 +15,6 @@ class CustomDns : Dns {
         try {
             return Dns.SYSTEM.lookup(hostname)
         } catch (e: UnknownHostException) {
-            // 系统 DNS 失败，尝试 DoH
         }
 
         try {
@@ -34,7 +33,6 @@ class CustomDns : Dns {
                 }
             }
         } catch (e: Exception) {
-            // DoH 也失败
         }
 
         throw UnknownHostException("无法解析域名 $hostname，请检查网络连接或切换网络后重试")
@@ -58,7 +56,6 @@ class CustomDns : Dns {
                 }
             }
         } catch (e: Exception) {
-            // 解析失败
         }
         return result
     }
