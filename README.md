@@ -65,38 +65,6 @@
 2. **笔记列表页**：顶部导航栏（显示昵称+退出按钮），搜索框+排序按钮，卡片式笔记列表，右下角新建笔记按钮
 3. **笔记编辑页**：顶部返回+导出+保存按钮，大标题输入框，正文编辑区，底部显示创建/更新时间+字数统计
 
-## 技术栈
-
-- **语言**：Kotlin（全项目 Kotlin + Gradle Kotlin DSL）
-- **最低 SDK**：API 24（Android 7.0）
-- **目标 SDK**：API 34（Android 14）
-- **网络请求**：OkHttp 4.12
-- **UI 框架**：AndroidX + Material Design + ViewBinding
-- **JSON 解析**：org.json（Android 内置）
-- **代码混淆**：R8（release 构建自动开启）
-- **DNS 兜底**：Cloudflare DNS-over-HTTPS（解决部分运营商域名解析失败）
-
-## 网络特性
-
-- **自定义 DNS 兜底**：系统 DNS 解析失败时自动走 Cloudflare DNS-over-HTTPS，解决部分运营商网络下域名解析失败的问题
-- 20 秒连接/读取超时
-- 连接失败自动重试
-
-## API 接口
-
-后端基于 PHP + JSON 文件存储，接口地址：`https://xingclouddisk.share.zrok.io/notes-api/`
-
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| `send_code.php` | POST | 发送邮箱验证码 |
-| `verify_code.php` | POST | 验证验证码（登录/注册） |
-| `notes_list.php` | GET | 获取笔记列表 |
-| `notes_create.php` | POST | 创建笔记 |
-| `notes_update.php` | POST | 更新笔记 |
-| `notes_delete.php` | POST | 删除笔记 |
-
-所有需要登录的接口需在请求头携带 `Authorization: Bearer <token>`。
-
 ## 使用指南
 
 ### 首次使用
@@ -167,43 +135,10 @@ A：当前版本需要联网才能加载和保存笔记。离线模式将在后�
 **Q：如何修改昵称？**
 A：当前版本暂不支持修改昵称，可退出后重新注册新账号。
 
-## 构建方式
-
-### 环境要求
-- JDK 17+
-- Android SDK（compileSdk 34）
-- Gradle 8.2+
-
-### 构建命令
-```bash
-# Debug 构建
-./gradlew assembleDebug
-
-# Release 构建（需配置签名密钥）
-./gradlew assembleRelease
-```
-
-### 签名配置
-在 `app/build.gradle.kts` 中配置签名密钥：
-```kotlin
-signingConfigs {
-    create("release") {
-        storeFile = file("your-keystore.jks")
-        storePassword = "your-password"
-        keyAlias = "your-alias"
-        keyPassword = "your-password"
-    }
-}
-```
-
 ## 版本历史
 
 - **v3.1** — 新增笔记搜索、排序、自动保存、字数统计、导出功能
-- **v3.0** — 全项目迁移到 Kotlin + Gradle Kotlin DSL
-- **v1.6** — Java 版，功能完整（登录/注册/笔记增删改查/分享/长按菜单）
-- **v1.4** — 开启 R8 代码混淆，体积优化到 3.6MB
+- **v3.0** — 全项目迁移到 Kotlin
+- **v1.6** — 功能完整（登录/注册/笔记增删改查/分享/长按菜单）
+- **v1.4** — 开启代码混淆，体积优化到 3.6MB
 - **v1.0** — 初始版本，基础笔记功能
-
-## License
-
-MIT License
