@@ -26,6 +26,7 @@ class NotesListActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var fabAdd: Button
     private lateinit var tvUser: TextView
+    private lateinit var btnAbout: TextView
     private lateinit var btnLogout: TextView
     private lateinit var etSearch: EditText
     private lateinit var btnSort: TextView
@@ -67,6 +68,7 @@ class NotesListActivity : AppCompatActivity() {
         swipeRefresh = findViewById(R.id.swipeRefresh)
         fabAdd = findViewById(R.id.fabAdd)
         tvUser = findViewById(R.id.tvUser)
+        btnAbout = findViewById(R.id.btnAbout)
         btnLogout = findViewById(R.id.btnLogout)
         etSearch = findViewById(R.id.etSearch)
         btnSort = findViewById(R.id.btnSort)
@@ -96,6 +98,7 @@ class NotesListActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener { loadNotes() }
         fabAdd.setOnClickListener { startActivity(Intent(this, NoteEditActivity::class.java)) }
         btnLogout.setOnClickListener { showLogoutDialog() }
+        btnAbout.setOnClickListener { startActivity(Intent(this, AboutActivity::class.java)) }
         btnSort.setOnClickListener { showSortDialog() }
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

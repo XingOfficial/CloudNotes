@@ -34,6 +34,15 @@
             android:layout_marginEnd="@dimen/spacing_md" />
 
         <TextView
+            android:id="@+id/btnAbout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="关于"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:padding="@dimen/spacing_sm"
+            android:layout_marginEnd="@dimen/spacing_sm" />
+        <TextView
             android:id="@+id/btnLogout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
