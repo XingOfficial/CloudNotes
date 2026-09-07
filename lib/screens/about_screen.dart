@@ -19,10 +19,10 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _openRepo() async {
     final uri = Uri.parse(repoUrl);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('无法打开浏览器')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('无法打开浏览器，请手动访问 GitHub')));
     }
   }
 
@@ -58,9 +58,9 @@ class _AboutScreenState extends State<AboutScreen> {
                 onPressed: () async {
                   Navigator.pop(ctx);
                   final uri = Uri.parse(htmlUrl);
-                  if (await canLaunchUrl(uri)) {
+                  try {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
+                  } catch (_) {}
                 },
                 child: const Text('去下载'),
               ),
