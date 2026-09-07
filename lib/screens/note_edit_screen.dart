@@ -208,21 +208,23 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       appBar: AppBar(
         title: Text(_isNewNote ? '新建笔记' : '编辑笔记'),
         actions: [
-          IconButton(
-            icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
-            onPressed: () => setState(() => _isFavorite = !_isFavorite),
-            tooltip: _isFavorite ? '取消收藏' : '收藏',
-          ),
-          IconButton(
-            icon: Icon(_isPinned ? Icons.push_pin : Icons.push_pin_outlined),
-            onPressed: () => setState(() => _isPinned = !_isPinned),
-            tooltip: _isPinned ? '取消置顶' : '置顶',
-          ),
-          IconButton(
-            onPressed: _isNewNote ? null : _exportMarkdown,
-            icon: const Icon(Icons.ios_share),
-            tooltip: '导出 Markdown',
-          ),
+          if (!_isNewNote) ...[
+            IconButton(
+              icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
+              onPressed: () => setState(() => _isFavorite = !_isFavorite),
+              tooltip: _isFavorite ? '取消收藏' : '收藏',
+            ),
+            IconButton(
+              icon: Icon(_isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+              onPressed: () => setState(() => _isPinned = !_isPinned),
+              tooltip: _isPinned ? '取消置顶' : '置顶',
+            ),
+            IconButton(
+              onPressed: _exportMarkdown,
+              icon: const Icon(Icons.ios_share),
+              tooltip: '导出 Markdown',
+            ),
+          ],
           TextButton(
             onPressed: _isSaving ? null : _save,
             child: _isSaving
@@ -265,68 +267,70 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('标签', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ..._tags.map((tag) => Chip(
-                        label: Text(tag),
-                        onDeleted: () => setState(() => _tags.remove(tag)),
-                      )),
-                      ActionChip(
-                        avatar: const Icon(Icons.add, size: 16),
-                        label: const Text('添加标签'),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('添加标签'),
-                              content: TextField(
-                                controller: _tagController,
-                                autofocus: true,
-                                decoration: const InputDecoration(hintText: '输入标签名称'),
-                                onSubmitted: (_) {
-                                  _addTag();
-                                  Navigator.pop(ctx);
-                                },
-                              ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-                                TextButton(
-                                  onPressed: () {
+                  if (!_isNewNote) ...[
+                    const SizedBox(height: 16),
+                    const Text('标签', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ..._tags.map((tag) => Chip(
+                          label: Text(tag),
+                          onDeleted: () => setState(() => _tags.remove(tag)),
+                        )),
+                        ActionChip(
+                          avatar: const Icon(Icons.add, size: 16),
+                          label: const Text('添加标签'),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('添加标签'),
+                                content: TextField(
+                                  controller: _tagController,
+                                  autofocus: true,
+                                  decoration: const InputDecoration(hintText: '输入标签名称'),
+                                  onSubmitted: (_) {
                                     _addTag();
                                     Navigator.pop(ctx);
                                   },
-                                  child: const Text('添加'),
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('提醒', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.alarm),
-                    title: Text(_reminderTime == null
-                        ? '未设置提醒'
-                        : DateFormat('yyyy-MM-dd HH:mm').format(_reminderTime!)),
-                    trailing: _reminderTime != null
-                        ? IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => setState(() => _reminderTime = null),
-                          )
-                        : null,
-                    onTap: _pickReminderTime,
-                  ),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+                                  TextButton(
+                                    onPressed: () {
+                                      _addTag();
+                                      Navigator.pop(ctx);
+                                    },
+                                    child: const Text('添加'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('提醒', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.alarm),
+                      title: Text(_reminderTime == null
+                          ? '未设置提醒'
+                          : DateFormat('yyyy-MM-dd HH:mm').format(_reminderTime!)),
+                      trailing: _reminderTime != null
+                          ? IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => setState(() => _reminderTime = null),
+                            )
+                          : null,
+                      onTap: _pickReminderTime,
+                    ),
+                  ],
                 ],
               ),
             ),
