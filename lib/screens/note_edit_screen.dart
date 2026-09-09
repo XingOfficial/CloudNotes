@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/note.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/local_data_service.dart';
 import '../services/notification_service.dart';
 
 class NoteEditScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   final _contentController = TextEditingController();
   final _tagController = TextEditingController();
   final _apiService = ApiService();
+  final _undoController = UndoHistoryController();
 
   bool _isSaving = false;
   bool _isNewNote = true;
@@ -32,10 +34,15 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   List<String> _tags = [];
   DateTime? _reminderTime;
 
+  late double _fontSize;
+  late int _maxChars;
+
   @override
   void initState() {
     super.initState();
     _apiService.setToken(StorageService.getToken());
+    _fontSize = LocalDataService.getEditorFontSize();
+    _maxChars = LocalDataService.getMaxChars();
     if (widget.note != null) {
       _isNewNote = false;
       _titleController.text = widget.note!.title;
@@ -51,17 +58,27 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     }
     _contentController.addListener(_onContentChanged);
     _titleController.addListener(_onContentChanged);
+    _undoController.addListener(_onUndoStateChanged);
   }
 
   @override
   void dispose() {
+    _undoController.removeListener(_onUndoStateChanged);
     _titleController.dispose();
     _contentController.dispose();
     _tagController.dispose();
+    _undoController.dispose();
     super.dispose();
   }
 
+  void _onUndoStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  int get _charCount => _titleController.text.length + _contentController.text.length;
+
   void _onContentChanged() {
+    setState(() {}); // 刷新字数统计
     if (_isNewNote) return;
     final now = DateTime.now();
     if (_lastAutoSaveTime != null && now.difference(_lastAutoSaveTime!).inSeconds < 2) {
@@ -98,6 +115,12 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     final content = _contentController.text;
     if (title.isEmpty && content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('标题和内容不能同时为空')));
+      return;
+    }
+    if (_charCount > _maxChars) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('内容超出字数上限（$_maxChars 字），请精简后再保存')),
+      );
       return;
     }
     setState(() => _isSaving = true);
@@ -204,6 +227,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final overLimit = _charCount > _maxChars;
+    final nearLimit = !overLimit && _charCount >= _maxChars * 0.9;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isNewNote ? '新建笔记' : '编辑笔记'),
@@ -225,6 +250,18 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
               tooltip: '导出 Markdown',
             ),
           ],
+          IconButton(
+            onPressed: _undoController.value.canUndo ? _undoController.undo : null,
+            icon: const Icon(Icons.undo),
+            tooltip: '撤销',
+            color: _undoController.value.canUndo ? null : Colors.grey,
+          ),
+          IconButton(
+            onPressed: _undoController.value.canRedo ? _undoController.redo : null,
+            icon: const Icon(Icons.redo),
+            tooltip: '重做',
+            color: _undoController.value.canRedo ? null : Colors.grey,
+          ),
           TextButton(
             onPressed: _isSaving ? null : _save,
             child: _isSaving
@@ -245,7 +282,8 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                     label: '笔记标题',
                     child: TextField(
                       controller: _titleController,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      undoController: _undoController,
+                      style: TextStyle(fontSize: _fontSize + 6, fontWeight: FontWeight.bold),
                       decoration: const InputDecoration(
                         hintText: '标题',
                         border: InputBorder.none,
@@ -258,8 +296,9 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                     label: '笔记内容',
                     child: TextField(
                       controller: _contentController,
+                      undoController: _undoController,
                       maxLines: null,
-                      style: const TextStyle(fontSize: 16, height: 1.6),
+                      style: TextStyle(fontSize: _fontSize, height: 1.6),
                       decoration: const InputDecoration(
                         hintText: '开始记录...',
                         border: InputBorder.none,
@@ -267,6 +306,28 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                       ),
                     ),
                   ),
+                  if (nearLimit || overLimit) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          overLimit ? Icons.error_outline : Icons.info_outline,
+                          size: 16,
+                          color: overLimit ? Colors.red : Colors.orange,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            overLimit ? '已超出字数上限，无法保存' : '即将达到字数上限',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: overLimit ? Colors.red : Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   if (!_isNewNote) ...[
                     const SizedBox(height: 16),
                     const Text('标签', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -353,8 +414,11 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 Text(
-                  '${_contentController.text.length} 字',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  '$_charCount / $_maxChars 字',
+                  style: TextStyle(
+                    color: overLimit ? Colors.red : (nearLimit ? Colors.orange : Colors.grey),
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),

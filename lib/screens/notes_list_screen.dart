@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -5,6 +6,7 @@ import '../models/note.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/local_data_service.dart';
 import 'login_screen.dart';
 import 'note_edit_screen.dart';
 import 'about_screen.dart';
@@ -51,6 +53,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
   }
 
   Future<void> _loadNotes() async {
+    // 优先显示本地缓存（离线可用）
+    final cached = LocalDataService.getNotesCache();
+    if (cached.isNotEmpty) {
+      _allNotes = cached.map((e) => Note.fromJson(e)).toList();
+      _applyFilterAndSort();
+    }
     setState(() => _isLoading = true);
     try {
       final notes = await _apiService.getNotes(
@@ -58,10 +66,18 @@ class _NotesListScreenState extends State<NotesListScreen> {
         tag: _filterTag,
       );
       _allNotes = notes;
+      await LocalDataService.saveNotesCache(notes.map((e) => e.toJson()).toList());
       _allTags = await _apiService.getTags();
       _applyFilterAndSort();
     } catch (e) {
-      if (mounted) {
+      // 网络失败：使用本地缓存
+      if (cached.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('网络不可用，正在显示本地缓存')),
+          );
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
         );
@@ -348,6 +364,46 @@ class _NotesListScreenState extends State<NotesListScreen> {
     Share.share(text, subject: '批量分享笔记');
   }
 
+  Future<void> _exportAllNotes() async {
+    if (_allNotes.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('没有可导出的笔记')));
+      }
+      return;
+    }
+    try {
+      final dir = Directory.systemTemp;
+      final file = File('${dir.path}/云笔记全部导出_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.md');
+      final buffer = StringBuffer();
+      buffer.writeln('# 云笔记导出');
+      buffer.writeln();
+      buffer.writeln('- 导出时间：${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+      buffer.writeln('- 共 ${_allNotes.length} 篇笔记');
+      buffer.writeln();
+      for (final note in _allNotes) {
+        buffer.writeln('---');
+        buffer.writeln();
+        buffer.writeln('## ${note.title.isEmpty ? '无标题' : note.title}');
+        final marks = <String>[
+          if (note.isFavorite) '⭐ 已收藏',
+          if (note.isPinned) '📌 已置顶',
+        ];
+        if (marks.isNotEmpty) buffer.writeln('> ${marks.join('　')}');
+        if (note.tags.isNotEmpty) buffer.writeln('> 标签：${note.tags.join('、')}');
+        buffer.writeln('> 创建：${DateFormat('yyyy-MM-dd HH:mm').format(note.createdAt)}　更新：${DateFormat('yyyy-MM-dd HH:mm').format(note.updatedAt)}');
+        buffer.writeln();
+        buffer.writeln(note.content);
+        buffer.writeln();
+      }
+      await file.writeAsString(buffer.toString());
+      await Share.shareXFiles([XFile(file.path)], text: '导出全部笔记（${_allNotes.length}篇）');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('导出失败')));
+      }
+    }
+  }
+
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -363,6 +419,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
     if (confirmed != true) return;
     await StorageService.clear();
+    await LocalDataService.clearNotesCache();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -404,6 +461,11 @@ class _NotesListScreenState extends State<NotesListScreen> {
               icon: const Icon(Icons.select_all),
               onPressed: _toggleSelectMode,
               tooltip: '批量操作',
+            ),
+            IconButton(
+              icon: const Icon(Icons.file_download),
+              onPressed: _exportAllNotes,
+              tooltip: '导出全部',
             ),
             IconButton(
               icon: const Icon(Icons.settings),

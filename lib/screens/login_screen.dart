@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/local_data_service.dart';
 import '../models/user.dart';
 import 'notes_list_screen.dart';
+import 'lock_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -91,7 +93,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       _apiService.setToken(token);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const NotesListScreen()),
+        MaterialPageRoute(
+          builder: (_) => LocalDataService.hasPin()
+              ? const LockScreen()
+              : const NotesListScreen(),
+        ),
       );
     } catch (e) {
       _showSnackBar(e.toString().replaceAll('Exception: ', ''));

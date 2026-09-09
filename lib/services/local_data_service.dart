@@ -114,4 +114,82 @@ class LocalDataService {
   static Future<void> setDarkMode(bool dark) async {
     await _prefs.setBool(_themeKey, dark);
   }
+
+  // ========== 笔记缓存（离线查看） ==========
+  static const _notesCacheKey = 'notes_cache';
+  static const _notesCacheTimeKey = 'notes_cache_time';
+
+  static List<Map<String, dynamic>> getNotesCache() {
+    final jsonStr = _prefs.getString(_notesCacheKey);
+    if (jsonStr == null) return [];
+    try {
+      final decoded = jsonDecode(jsonStr);
+      if (decoded is List) {
+        return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static DateTime? getNotesCacheTime() {
+    final ts = _prefs.getInt(_notesCacheTimeKey);
+    if (ts == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(ts);
+  }
+
+  static Future<void> saveNotesCache(List<Map<String, dynamic>> notes) async {
+    await _prefs.setString(_notesCacheKey, jsonEncode(notes));
+    await _prefs.setInt(_notesCacheTimeKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  static Future<void> clearNotesCache() async {
+    await _prefs.remove(_notesCacheKey);
+    await _prefs.remove(_notesCacheTimeKey);
+  }
+
+  // ========== 编辑页字体大小 ==========
+  static const _fontSizeKey = 'editor_font_size';
+
+  static double getEditorFontSize() {
+    return _prefs.getDouble(_fontSizeKey) ?? 16.0;
+  }
+
+  static Future<void> setEditorFontSize(double size) async {
+    await _prefs.setDouble(_fontSizeKey, size);
+  }
+
+  // ========== 应用锁 PIN ==========
+  static const _pinKey = 'app_pin';
+
+  static String? getPin() {
+    return _prefs.getString(_pinKey);
+  }
+
+  static bool hasPin() {
+    final pin = getPin();
+    return pin != null && pin.isNotEmpty;
+  }
+
+  static Future<void> setPin(String pin) async {
+    await _prefs.setString(_pinKey, pin);
+  }
+
+  static Future<void> clearPin() async {
+    await _prefs.remove(_pinKey);
+  }
+
+  static bool verifyPin(String pin) {
+    return getPin() == pin;
+  }
+
+  // ========== 字数限制 ==========
+  static const _maxCharsKey = 'max_note_chars';
+
+  static int getMaxChars() {
+    return _prefs.getInt(_maxCharsKey) ?? 10000;
+  }
+
+  static Future<void> setMaxChars(int chars) async {
+    await _prefs.setInt(_maxCharsKey, chars);
+  }
 }

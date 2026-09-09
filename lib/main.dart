@@ -5,6 +5,7 @@ import 'services/local_data_service.dart';
 import 'services/notification_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/notes_list_screen.dart';
+import 'screens/lock_screen.dart';
 
 final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -23,6 +24,7 @@ class CloudNotesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasToken = StorageService.getToken() != null;
+    final locked = hasToken && LocalDataService.hasPin();
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeModeNotifier,
       builder: (context, mode, child) {
@@ -58,7 +60,11 @@ class CloudNotesApp extends StatelessWidget {
             ),
           ),
           themeMode: mode,
-          home: hasToken ? const NotesListScreen() : const LoginScreen(),
+          home: !hasToken
+              ? const LoginScreen()
+              : locked
+                  ? const LockScreen()
+                  : const NotesListScreen(),
         );
       },
     );
