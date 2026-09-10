@@ -15,7 +15,7 @@ class _AboutScreenState extends State<AboutScreen> {
   String _updateStatus = '点击按钮检查是否有新版本';
 
   static const String repoUrl = 'https://github.com/XingOfficial/CloudNotes';
-  static const String currentVersion = '1.0.2';
+  static const String currentVersion = '1.0.3';
 
   Future<void> _openRepo() async {
     final uri = Uri.parse(repoUrl);

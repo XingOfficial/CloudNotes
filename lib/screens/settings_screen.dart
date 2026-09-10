@@ -154,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('关于'),
-            subtitle: const Text('云笔记 v1.0.2'),
+            subtitle: const Text('云笔记 v1.0.3'),
             onTap: () {
               Navigator.pushNamed(context, '/about');
             },
